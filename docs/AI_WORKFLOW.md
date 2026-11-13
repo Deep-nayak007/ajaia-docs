@@ -1,41 +1,46 @@
 # AI workflow note
 
-> **Before submitting:** this note describes the build session with Kiro. Edit it so it reflects your own usage, including any review, prompting or other tools you used.
+## How I worked
 
-## Tools
+I built this with **Kiro**, an agentic IDE running a Claude model. I gave it the full assignment brief and had it work end to end: plan the scope, write the code, run the checks, and report back. I then handled the parts that need my accounts: creating the GitHub repo, deploying on Render, and confirming the live URL. I treated the AI as a fast implementer whose work has to be proven by running it. "The code looks right" wasn't enough.
 
-- **Kiro** (agentic IDE, Claude model). It scaffolded the project, wrote most of the first-pass code, and ran the tests, builds and browser checks from the terminal.
-- **Playwright** (driven by the agent) for headless browser checks of the real UI with three simultaneous users.
+**Tools used:**
+- **Kiro:** scaffolding, implementation, tests, debugging, and docs.
+- **Playwright:** a headless browser, driven from Kiro, that signs in three users at once and uses the real UI.
+- **GitHub CLI and GitHub Actions:** creating the repo and running CI on every push.
+- **Render:** hosting, set up from the `render.yaml` blueprint.
 
 ## Where AI sped things up
 
-- **Scaffolding and wiring.** Express, Vite, TipTap, Vitest, the TypeScript configs and the deploy files took minutes instead of an hour or more.
-- **Library details.** It handled TipTap 3 specifics such as `useEditorState` for toolbar state and StarterKit now bundling Underline and Link. It also covered Express 5 route syntax and `node:sqlite` usage.
-- **Test breadth.** It wrote the full permission matrix, including the 404-not-403 cases, revocation, and import failure modes, which I would otherwise have trimmed.
-- **Browser walkthrough.** It drove three browser sessions in parallel to check sharing, live updates and conflicts. That would be slow to repeat by hand after every change.
+- **Setup and wiring.** Getting Express, Vite, React, TipTap, Vitest, the TypeScript configs, CI and the Render/Docker files working together took minutes, not a couple of hours.
+- **Current library details.** TipTap 3 now includes Underline and Link in StarterKit, and needs `useEditorState` for toolbar state. Express 5 changed its route syntax. Node now has built-in SQLite. These are details I'd otherwise have looked up one by one.
+- **Test coverage I'd have cut for time.** The API tests cover every sharing case: owner, editor, viewer, revoked, and never shared. They also check that hidden documents return 404 rather than 403, and that bad uploads fail cleanly.
+- **Repeatable multi-user testing.** Sharing, live updates and save conflicts need two or three people at once, which is slow to check by hand. The Playwright script does it in about a minute. I reran it after every fix and again against the live site.
 
-## What was changed or rejected
+## What I changed or rejected from the AI's first attempt
 
-Each item below was caught by running the app, not by reading the code.
+Running the app caught every one of these. None were found by reading the code.
 
-- **Spurious saves from the editor.** The first version saved on every TipTap `onUpdate`. In the three-user run, the viewer's tab produced a 403 and an editor got a false conflict, both from saves when nobody had typed. I changed it so a save only happens when the HTML actually changed and the update didn't come from applying someone else's edit. The editable flag is also toggled without emitting an update.
-- **Dropped keystrokes after renaming.** Pressing Enter in the title called `editor.commands.focus()`, which waits a frame before focusing. Text typed straight after was lost. The fix focuses the editor view synchronously.
-- **Frontend path in the compiled server.** It resolved `dist/` relative to the compiled file, giving `dist/dist/client`, so the deployed build would have served 404s. Found with a curl smoke test against `npm start`. The server now looks for the project root instead.
-- **Cookies over local HTTP.** I rejected "Secure cookies whenever `NODE_ENV=production`" because it breaks `npm start` over plain HTTP. Cookies are now Secure exactly when the request arrived over HTTPS, using `trust proxy` behind Render.
-- **Conflict banner placement.** The banner scrolled off-screen, so a user deep in a document only saw a small red "Conflict" label. I spotted this in a screenshot. The banners now stick to the top with the toolbar.
-- **Rejected: real-time co-editing with a CRDT.** Too large for the timebox. Versioned saves plus polling give safe, understandable behavior instead.
-- **Misdiagnosis caught.** One import landed at the top of the document in a headless run. I traced ProseMirror transactions and found the cause was the test clicking before the browser's `selectionchange` was processed, not an app bug. I fixed the test and added an assertion that imported content lands at the cursor, rather than adding a workaround in the app.
+- **Saves when nobody had typed.** The first version saved on every editor update event. In the three-user test, the viewer's tab tried to save and got a 403, and an editor got a false "someone else changed this" conflict. Now a save only happens when the content actually changed, and never while applying someone else's edit.
+- **Lost keystrokes after renaming.** Pressing Enter in the title moved focus to the editor one frame late, so the first few typed characters disappeared. Now focus moves immediately.
+- **A broken production build.** The compiled server looked for the frontend in the wrong folder (`dist/dist/client`), so the deployed site would have returned 404s. A quick check against `npm start` caught it before deploying.
+- **Cookies that broke local runs.** I rejected the first approach, which marked cookies Secure whenever the app ran in production mode. That breaks login when running the production build over plain HTTP on localhost. Cookies are now Secure only when the request came over HTTPS, which is the case on Render.
+- **A conflict warning you couldn't see.** In the screenshots, the conflict banner had scrolled off-screen, leaving only a small red "Conflict" label at the top. The banners now stay pinned under the header.
+- **A wrong diagnosis, corrected.** In one test run, imported text landed at the top of the document. Instead of adding a workaround to the app, I traced the editor's transactions. The cause was the test clicking before the browser had registered the new cursor position, so it was a test timing issue, not an app bug. I fixed the test and added a check that imported content lands where the cursor is.
+- **Rejected: real-time co-editing.** Character-by-character collaboration, using a CRDT library such as Yjs, was too big for the timebox. I chose versioned saves plus a check every 5 seconds for other people's changes. The server refuses a save based on an outdated version, so nobody's work is silently overwritten.
 
-## How correctness was verified
+## How I verified correctness, UX, and reliability
 
-- `npm test`: 10 API tests covering auth, document lifecycle, sanitization, validation, the stale-write 409, the full role matrix, and `.md`/`.txt`/`.docx` import and rejection.
-- `npm run typecheck` with strict TypeScript on both server and client.
-- `npm run e2e`: a Playwright walkthrough against the production build (`npm start`) with Alice, Bob and Carol at the same time. It covers:
-  - create, rename, all formatting, and reload to confirm persistence
+- **API tests (`npm test`, 10 tests).** They cover login, the document lifecycle, cleaning unsafe HTML, input validation, refusing outdated saves, every sharing role, and importing `.md`, `.txt` and `.docx`, including bad files.
+- **Strict TypeScript** on both server and client (`npm run typecheck`).
+- **CI on GitHub Actions** runs type checks, tests and the production build on Linux for every push.
+- **Browser test (`npm run e2e`)** against the production build, and then against the live Render URL. It covers:
+  - create, rename and format a document, and reload to confirm it was saved
   - sharing, including an unknown email
-  - viewer is read-only
-  - live updates between users
-  - conflict resolution
-  - upload, rejecting a bad file type, and import at the cursor
-  - revoked access
-- **UX review** of the generated screenshots on desktop and a 390 px phone width. This led to the header layout fix on mobile and the sticky banners.
+  - a viewer can't edit
+  - edits from one user appear for the others
+  - resolving a save conflict
+  - uploading a file, rejecting an unsupported type, and importing at the cursor
+  - removing someone's access while they have the document open
+- **UX review** of the generated screenshots at desktop and phone (390 px) widths. This led to the mobile header layout fix and the pinned warning banners.
+- **Live check after deploying.** I confirmed the health check, login over HTTPS and the seeded data, then ran the browser test against the live site. Afterwards I deleted the test documents so reviewers start from the seeded data.

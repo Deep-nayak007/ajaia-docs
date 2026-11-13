@@ -3,7 +3,7 @@
 ## Links
 
 - **Source repository:** https://github.com/Deep-nayak007/ajaia-docs
-- **Live product:** _TODO: paste deployed URL_
+- **Live product:** https://ajaia-docs-qwbs.onrender.com (free tier, so the first request after idle takes about 30 s)
 - **Walkthrough video:** see `VIDEO_URL.txt`
 - **Google Drive folder:** _TODO: paste folder link_
 

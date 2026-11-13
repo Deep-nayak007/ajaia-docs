@@ -2,7 +2,7 @@
 
 A lightweight collaborative document editor. Users can create and format documents, import files, share with teammates as editors or viewers, and see each other's changes without reloading.
 
-**Live demo:** _add your deployed URL here_ (see [Deploying](#deploying))
+**Live demo:** https://ajaia-docs-qwbs.onrender.com. This is Render's free tier: the first load after a quiet period can take about 30 s while the server wakes up.
 
 [![CI](https://github.com/Deep-nayak007/ajaia-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/Deep-nayak007/ajaia-docs/actions/workflows/ci.yml)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Deep-nayak007/ajaia-docs)

@@ -8,8 +8,7 @@ A lightweight collaborative document editor. Users can create and format documen
 |---|---|
 | **Live product** | https://ajaia-docs-qwbs.onrender.com |
 | **Source code** | https://github.com/Deep-nayak007/ajaia-docs |
-| **Walkthrough video** | _PASTE VIDEO LINK_ |
-| **Google Drive folder** | _PASTE DRIVE LINK_ |
+| **Walkthrough video** | https://youtu.be/wpQDF0eNxzc |
 
 The live app runs on Render's free tier. The first load after a quiet period can take about 30 seconds while the server wakes up.
 

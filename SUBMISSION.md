@@ -2,6 +2,7 @@
 
 ## Links
 
+- **Source repository:** https://github.com/Deep-nayak007/ajaia-docs
 - **Live product:** _TODO: paste deployed URL_
 - **Walkthrough video:** see `VIDEO_URL.txt`
 - **Google Drive folder:** _TODO: paste folder link_

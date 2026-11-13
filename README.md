@@ -4,6 +4,9 @@ A lightweight collaborative document editor. Users can create and format documen
 
 **Live demo:** _add your deployed URL here_ (see [Deploying](#deploying))
 
+[![CI](https://github.com/Deep-nayak007/ajaia-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/Deep-nayak007/ajaia-docs/actions/workflows/ci.yml)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Deep-nayak007/ajaia-docs)
+
 ![Editor](docs/screenshots/03-editor.png)
 
 ## Demo accounts
@@ -76,7 +79,7 @@ npx playwright install chromium && npm run e2e # terminal 2
 
 The app is a single Node service. Express serves both the API and the built frontend, so a single URL serves everything.
 
-**Render (free, no credit card):** push this repo to GitHub. In Render, choose **New → Blueprint** and select the repo. `render.yaml` sets the build command (`npm ci && npm run build`), the start command (`npm start`) and the health check (`/api/health`).
+**Render (free, no credit card):** click the **Deploy to Render** button above, or in Render choose **New → Blueprint** and select this repo. `render.yaml` sets the build command (`npm ci && npm run build`), the start command (`npm start`) and the health check (`/api/health`).
 
 > On Render's free plan the filesystem is not persistent, so the SQLite database resets when the instance restarts or redeploys. Free instances also sleep after about 15 minutes idle, and the first request after that takes about 30 s. The demo users and sample documents are re-seeded on every boot, so the review flow always works. For durable data, add a disk and set `DATABASE_PATH` (commented out in `render.yaml`).
 
